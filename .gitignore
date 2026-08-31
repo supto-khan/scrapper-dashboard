@@ -1,0 +1,45 @@
+# Logs and Environment
+*.log
+.env
+.env.backup
+.env.production
+.env.*.local
+
+# Dependency directories
+/node_modules
+/vendor
+
+# Laravel Build & Storage
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*.log
+!/storage/framework/cache/data/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/testing/.gitignore
+!/storage/framework/views/.gitignore
+!/storage/logs/.gitignore
+
+# Development and IDE files
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+/.cursor/
+/.codex
+/.zed
+/.nova
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+
+# Testing Cache
+.phpunit.result.cache
+/.phpunit.cache
+.phpactor.json

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 48" fill="none">
+  <defs>
+    <!-- Background Gradient for Icon Container: Surface #FFFFFF to Brand BG #F0FDF9 to Emerald Tint #D1FAE5 -->
+    <linearGradient id="logoBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#F0FDF9" />
+      <stop offset="100%" stop-color="#D1FAE5" />
+    </linearGradient>
+
+    <!-- Primary Brand Gradient for Mark -->
+    <linearGradient id="logoPrimaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C896" />
+      <stop offset="100%" stop-color="#00A878" />
+    </linearGradient>
+
+    <!-- Border Gradient -->
+    <linearGradient id="logoBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C896" />
+      <stop offset="100%" stop-color="#00A878" />
+    </linearGradient>
+
+    <!-- Drop Shadow for Mark -->
+    <filter id="logoShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#00A878" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Logo Mark Icon Container -->
+  <g transform="translate(2, 4)">
+    <rect width="40" height="40" rx="12" fill="url(#logoBgGrad)" stroke="url(#logoBorderGrad)" stroke-width="1.5"/>
+    <!-- Signal Pulse Waves -->
+    <path d="M28 12 A 12 12 0 0 1 28 28" stroke="#00A878" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+    <path d="M32 8 A 17 17 0 0 1 32 32" stroke="#00C896" stroke-width="1.5" stroke-linecap="round" opacity="0.2"/>
+    <!-- Central Lightning Revenue Bolt -->
+    <path d="M21 9 L12 21 L19 21 L16 32 L28 17 L21 17 Z" fill="url(#logoPrimaryGrad)" filter="url(#logoShadow)"/>
+    <circle cx="29" cy="12" r="1.5" fill="#00A878"/>
+  </g>
+
+  <!-- Brand Typography -->
+  <text x="54" y="27" font-family="'Lexend', sans-serif" font-weight="800" font-size="20" fill="#0F1F17" letter-spacing="-0.5">
+    Nexidant <tspan fill="#00A878">Signal</tspan>
+  </text>
+  <text x="54" y="39" font-family="'Lexend', sans-serif" font-weight="600" font-size="8" fill="#64748B" letter-spacing="1.5" text-transform="uppercase">
+    REVENUE INTELLIGENCE ENGINE
+  </text>
+</svg>

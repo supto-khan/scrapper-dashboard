@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Gradient: Brand Background (#F0FDF9) to Mint/Teal Tint (#D1FAE5) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#F0FDF9" />
+      <stop offset="100%" stop-color="#D1FAE5" />
+    </linearGradient>
+
+    <!-- Primary Brand Gradient: Primary (#00A878) to Vibrant Mint CTA (#00C896) -->
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C896" />
+      <stop offset="100%" stop-color="#00A878" />
+    </linearGradient>
+
+    <!-- Deep Primary for Border/Contrast -->
+    <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C896" />
+      <stop offset="100%" stop-color="#00A878" />
+    </linearGradient>
+
+    <!-- Drop Shadow for crisp elevation -->
+    <filter id="softShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00A878" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Container Squircle with Brand BG and subtle Primary Border -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="url(#strokeGrad)" stroke-width="2"/>
+
+  <!-- Concentric Signal / Radar Waves in Primary Brand Color -->
+  <path d="M44 19 A 17 17 0 0 1 44 45" stroke="#00A878" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <path d="M50 14 A 24 24 0 0 1 50 50" stroke="#00C896" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+
+  <!-- Central Dynamic Revenue Bolt in Brand Primary Gradient with Soft Shadow -->
+  <path d="M33 13 L20 32 L31 32 L26 51 L44 28 L33 28 Z" fill="url(#primaryGrad)" filter="url(#softShadow)"/>
+
+  <!-- Accent Pulse Node -->
+  <circle cx="45" cy="19" r="2.5" fill="#00A878"/>
+</svg>
