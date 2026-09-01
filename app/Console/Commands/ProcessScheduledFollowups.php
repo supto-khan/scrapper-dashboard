@@ -66,9 +66,19 @@ class ProcessScheduledFollowups extends Command
                 $trackingUrl = url("/track/open/{$followup->id}");
                 $htmlBody = nl2br(e($followup->body_text)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
 
-                Mail::html($htmlBody, function ($mail) use ($toEmail, $followup) {
+                $pdfPath = $followup->company ? $followup->company->report_pdf_path : null;
+
+                Mail::html($htmlBody, function ($mail) use ($toEmail, $followup, $pdfPath) {
                     $mail->to($toEmail)
                          ->subject($followup->subject);
+
+                    if ($pdfPath && file_exists($pdfPath)) {
+                        $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $followup->company->name ?? 'Company');
+                        $mail->attach($pdfPath, [
+                            'as' => "{$companyName}_Website_Technical_Audit.pdf",
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
 
                     if ($followup->in_reply_to) {
                         $cleanInReplyTo = trim($followup->in_reply_to, '<>');

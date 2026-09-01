@@ -46,9 +46,19 @@ class OutreachLogs extends Component
             $trackingUrl = url("/track/open/{$msg->id}");
             $htmlBody = nl2br(e($msg->body_text)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
 
-            Mail::html($htmlBody, function ($message) use ($toEmail, $msg) {
+            $pdfPath = $msg->company ? $msg->company->report_pdf_path : null;
+
+            Mail::html($htmlBody, function ($message) use ($toEmail, $msg, $pdfPath) {
                 $message->to($toEmail)
                         ->subject($msg->subject);
+
+                if ($pdfPath && file_exists($pdfPath)) {
+                    $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $msg->company->name ?? 'Company');
+                    $message->attach($pdfPath, [
+                        'as' => "{$companyName}_Website_Technical_Audit.pdf",
+                        'mime' => 'application/pdf',
+                    ]);
+                }
             });
 
             $msg->update([

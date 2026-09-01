@@ -88,11 +88,21 @@ class InboxDashboard extends Component
 
             $htmlBody = nl2br(e($fullBody));
 
-            Mail::html($htmlBody, function ($mail) use ($toEmail, $customMessageId, $activeMsg) {
+            $pdfPath = $activeMsg->company ? $activeMsg->company->report_pdf_path : null;
+
+            Mail::html($htmlBody, function ($mail) use ($toEmail, $customMessageId, $activeMsg, $pdfPath) {
                 $mail->to($toEmail)
                      ->subject($this->replySubject)
                      ->getHeaders()
                      ->addIdHeader('Message-ID', $customMessageId);
+
+                if ($pdfPath && file_exists($pdfPath)) {
+                    $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $activeMsg->company->name ?? 'Company');
+                    $mail->attach($pdfPath, [
+                        'as' => "{$companyName}_Website_Technical_Audit.pdf",
+                        'mime' => 'application/pdf',
+                    ]);
+                }
 
                 if ($activeMsg->message_id) {
                     $cleanInReplyTo = trim($activeMsg->message_id, '<>');
