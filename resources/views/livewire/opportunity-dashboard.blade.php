@@ -121,7 +121,7 @@
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#00A878] border border-emerald-300 rounded-lg text-xs font-bold transition shadow-sm"
             >
                 <svg class="w-3.5 h-3.5 text-[#00A878]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span>📍 Google Maps Crawl</span>
+                <span>Google Maps Crawl</span>
             </button>
 
             <!-- 2. Intelligence -->
@@ -190,16 +190,18 @@
             <button
                 wire:click="$set('sourceFilter', 'google_maps'); $set('websiteFilter', 'all')"
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $sourceFilter === 'google_maps' && $websiteFilter === 'all' ? 'bg-[#00A878] text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $sourceFilter === 'google_maps' && $websiteFilter === 'all' ? 'bg-[#00A878] text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}"
             >
-                📍 Google Maps Leads
+                <svg class="w-3.5 h-3.5 {{ $sourceFilter === 'google_maps' && $websiteFilter === 'all' ? 'text-white' : 'text-[#00A878]' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Google Maps Leads</span>
             </button>
             <button
                 wire:click="$set('websiteFilter', 'no_website')"
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $websiteFilter === 'no_website' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100' }}"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap {{ $websiteFilter === 'no_website' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100' }}"
             >
-                🔥 No Website (Top Priority)
+                <svg class="w-3.5 h-3.5 {{ $websiteFilter === 'no_website' ? 'text-white' : 'text-amber-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>No Website (High Priority)</span>
             </button>
             <button
                 wire:click="$set('sourceFilter', 'clutch'); $set('websiteFilter', 'all')"
@@ -376,63 +378,178 @@
                 <!-- Drawer Filter Body -->
                 <div class="p-6 space-y-6 flex-1">
                     <!-- 1. Priority Tier -->
-                    <div class="space-y-1.5">
+                    <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                             <span>Lead Priority Tier</span>
                             <span class="text-[10px] font-mono text-slate-400">Based on signal scoring</span>
                         </label>
-                        <select wire:model.live="priorityTier" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00A878] focus:bg-white transition">
-                            <option value="all">All Priorities (Immediate to Low)</option>
-                            <option value="immediate">🔥 Immediate Action (Score 90–100)</option>
-                            <option value="high">⭐ High Priority (Score 75–89)</option>
-                            <option value="nurture">🌱 Nurture (Score 60–74)</option>
-                            <option value="low">💤 Low Priority (Score 40–59)</option>
-                        </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                wire:click="$set('priorityTier', 'all')"
+                                type="button"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'all' ? 'bg-[#00A878] text-white border-[#00A878] shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                <span>All Priorities</span>
+                            </button>
+                            <button
+                                wire:click="$set('priorityTier', 'immediate')"
+                                type="button"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'immediate' ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-4 h-4 text-rose-500 {{ $priorityTier === 'immediate' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/></svg>
+                                <span>Immediate (90+)</span>
+                            </button>
+                            <button
+                                wire:click="$set('priorityTier', 'high')"
+                                type="button"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'high' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-4 h-4 text-amber-500 {{ $priorityTier === 'high' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                <span>High (75–89)</span>
+                            </button>
+                            <button
+                                wire:click="$set('priorityTier', 'nurture')"
+                                type="button"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'nurture' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-4 h-4 text-blue-500 {{ $priorityTier === 'nurture' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                <span>Nurture (60–74)</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- 2. Opportunity Status (New) -->
-                    <div class="space-y-1.5">
+                    <!-- 2. Opportunity Status -->
+                    <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                            <span>Opportunity Lifecycle Status</span>
+                            <span>Opportunity Status</span>
                             <span class="text-[10px] font-mono text-slate-400">Deal progression</span>
                         </label>
-                        <select wire:model.live="opportunityStatus" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00A878] focus:bg-white transition">
-                            <option value="all">All Opportunity Statuses</option>
-                            <option value="detected">🔍 Detected (Fresh algorithmic signal)</option>
-                            <option value="qualified">🎯 Qualified (Pre-approved / Staged)</option>
-                            <option value="contacted">📬 Contacted (Outreach sent)</option>
-                            <option value="in_discussion">💬 In Discussion</option>
-                            <option value="proposal_sent">📑 Proposal Sent</option>
-                            <option value="won">🎉 Closed Won</option>
-                            <option value="lost">❌ Closed Lost</option>
-                        </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                wire:click="$set('opportunityStatus', 'all')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'all' ? 'bg-[#00A878] text-white border-[#00A878]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                <span>All Statuses</span>
+                            </button>
+                            <button
+                                wire:click="$set('opportunityStatus', 'detected')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'detected' ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-amber-500 {{ $opportunityStatus === 'detected' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <span>Detected</span>
+                            </button>
+                            <button
+                                wire:click="$set('opportunityStatus', 'qualified')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'qualified' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-blue-500 {{ $opportunityStatus === 'qualified' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Qualified</span>
+                            </button>
+                            <button
+                                wire:click="$set('opportunityStatus', 'contacted')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'contacted' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-indigo-500 {{ $opportunityStatus === 'contacted' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span>Contacted</span>
+                            </button>
+                            <button
+                                wire:click="$set('opportunityStatus', 'in_discussion')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'in_discussion' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-purple-500 {{ $opportunityStatus === 'in_discussion' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>In Discussion</span>
+                            </button>
+                            <button
+                                wire:click="$set('opportunityStatus', 'won')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $opportunityStatus === 'won' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-emerald-500 {{ $opportunityStatus === 'won' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                <span>Closed Won</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- 3. Outreach State -->
-                    <div class="space-y-1.5">
+                    <!-- 3. Cold Outreach State -->
+                    <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                             <span>Cold Outreach State</span>
                             <span class="text-[10px] font-mono text-slate-400">Email delivery</span>
                         </label>
-                        <select wire:model.live="outreachStatus" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00A878] focus:bg-white transition">
-                            <option value="all">⚪ All Leads (Any Outreach State)</option>
-                            <option value="uncontacted">🟢 Fresh Uncontacted (No emails sent or queued)</option>
-                            <option value="queued">🟡 Queued for Peak (Staged in outreach queue)</option>
-                            <option value="contacted">🔵 Contacted / Pitched (Delivered / Opened)</option>
-                        </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                wire:click="$set('outreachStatus', 'all')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $outreachStatus === 'all' ? 'bg-[#00A878] text-white border-[#00A878]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                                <span>All Leads</span>
+                            </button>
+                            <button
+                                wire:click="$set('outreachStatus', 'uncontacted')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $outreachStatus === 'uncontacted' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-emerald-500 {{ $outreachStatus === 'uncontacted' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Fresh Uncontacted</span>
+                            </button>
+                            <button
+                                wire:click="$set('outreachStatus', 'queued')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $outreachStatus === 'queued' ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-amber-500 {{ $outreachStatus === 'queued' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Queued for Peak</span>
+                            </button>
+                            <button
+                                wire:click="$set('outreachStatus', 'contacted')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition {{ $outreachStatus === 'contacted' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-indigo-500 {{ $outreachStatus === 'contacted' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                <span>Pitched / Sent</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 4. Decision Maker Contacts Enrichment -->
-                    <div class="space-y-1.5">
+                    <div class="space-y-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                             <span>Decision Maker Enrichment</span>
-                            <span class="text-[10px] font-mono text-slate-400">Hunter/Apollo verified</span>
+                            <span class="text-[10px] font-mono text-slate-400">Hunter / Apollo verified</span>
                         </label>
-                        <select wire:model.live="enrichmentStatus" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00A878] focus:bg-white transition">
-                            <option value="all">All Leads (Enriched & Pending)</option>
-                            <option value="enriched">👤 Enriched Only (Has Verified Decision Maker)</option>
-                            <option value="not_enriched">⏳ Pending Enrichment (Domain / Generic email)</option>
-                        </select>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button
+                                wire:click="$set('enrichmentStatus', 'all')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition {{ $enrichmentStatus === 'all' ? 'bg-[#00A878] text-white border-[#00A878]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <span>All Leads</span>
+                            </button>
+                            <button
+                                wire:click="$set('enrichmentStatus', 'enriched')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition {{ $enrichmentStatus === 'enriched' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-emerald-500 {{ $enrichmentStatus === 'enriched' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <span>Enriched</span>
+                            </button>
+                            <button
+                                wire:click="$set('enrichmentStatus', 'not_enriched')"
+                                type="button"
+                                class="p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1 transition {{ $enrichmentStatus === 'not_enriched' ? 'bg-slate-600 text-white border-slate-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-3.5 h-3.5 text-slate-400 {{ $enrichmentStatus === 'not_enriched' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Pending</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 5. Service Offering -->
@@ -448,6 +565,7 @@
                             <option value="staff_augmentation">Full-Stack Squad Augmentation</option>
                             <option value="performance_optimization">Core Web Vitals & Speed Optimization</option>
                             <option value="security_hardening">Security & Architecture Hardening</option>
+                            <option value="new_website_creation">Turnkey New Website & Booking System</option>
                         </select>
                     </div>
 

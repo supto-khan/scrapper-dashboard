@@ -130,7 +130,7 @@ class OpportunityDashboard extends Component
             'contacts',
         ]);
 
-        // Quality Gate: Strictly exclude unqualified leads (Score < 40 and priority_tier = 'ignore')
+        // Quality Gate: Strictly exclude unqualified or unscored leads (Score < 40 and priority_tier = 'ignore')
         $query->whereHas('latestScore', function ($q) {
             $effectiveMin = max(40, $this->minScore);
             $q->where('opportunity_score', '>=', $effectiveMin)
@@ -146,7 +146,14 @@ class OpportunityDashboard extends Component
         }
 
         if ($this->sourceFilter !== 'all') {
-            $query->where('source', $this->sourceFilter);
+            if ($this->sourceFilter === 'google_maps') {
+                $query->where(function ($q) {
+                    $q->whereIn('source', ['google_maps', 'local_business_directory'])
+                      ->orWhere('domain', 'like', '%.local');
+                });
+            } else {
+                $query->where('source', $this->sourceFilter);
+            }
         }
 
         if ($this->websiteFilter === 'no_website') {
