@@ -114,11 +114,21 @@ class DispatchDailyOutreach extends Command
                 $trackingUrl = url("/track/open/{$message->id}");
                 $htmlBody = nl2br(e($message->body_text)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
 
-                Mail::html($htmlBody, function ($mail) use ($toEmail, $message, $customMessageId) {
+                $pdfPath = $message->company ? $message->company->report_pdf_path : null;
+
+                Mail::html($htmlBody, function ($mail) use ($toEmail, $message, $customMessageId, $pdfPath) {
                     $mail->to($toEmail)
                          ->subject($message->subject)
                          ->getHeaders()
                          ->addIdHeader('Message-ID', $customMessageId);
+
+                    if ($pdfPath && file_exists($pdfPath)) {
+                        $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $message->company->name ?? 'Company');
+                        $mail->attach($pdfPath, [
+                            'as' => "{$companyName}_Website_Technical_Audit.pdf",
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
                 });
 
                 // Update message record

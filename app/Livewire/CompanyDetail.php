@@ -353,9 +353,19 @@ PROMPT;
             $trackingUrl = url("/track/open/{$outreach->id}");
             $htmlBody = nl2br(e($this->emailBody)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
 
-            \Illuminate\Support\Facades\Mail::html($htmlBody, function ($message) use ($toEmail) {
+            $pdfPath = $this->company->report_pdf_path;
+            $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $this->company->name ?? 'Company');
+
+            \Illuminate\Support\Facades\Mail::html($htmlBody, function ($message) use ($toEmail, $pdfPath, $companyName) {
                 $message->to($toEmail)
                         ->subject($this->emailSubject);
+
+                if ($pdfPath && file_exists($pdfPath)) {
+                    $message->attach($pdfPath, [
+                        'as' => "{$companyName}_Website_Technical_Audit.pdf",
+                        'mime' => 'application/pdf',
+                    ]);
+                }
             });
 
             $outreach->update([
@@ -371,10 +381,24 @@ PROMPT;
 
             $this->isQueued = true;
             $this->loadCompany();
-            session()->flash('success_message', "🚀 Cold email sent immediately to {$toEmail} and tracked!");
+            session()->flash('success_message', "🚀 Cold email sent immediately to {$toEmail} with PDF audit report attached!");
         } catch (\Exception $e) {
             session()->flash('error_message', "Failed to send email: " . $e->getMessage());
         }
+    }
+
+    public function downloadReportPdf()
+    {
+        $pdfPath = $this->company->report_pdf_path;
+        if (!$pdfPath || !file_exists($pdfPath)) {
+            session()->flash('error_message', "No generated PDF audit report found for this company yet. Run the 360° Intelligence pipeline first.");
+            return;
+        }
+
+        $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $this->company->name ?? 'Company');
+        return response()->download($pdfPath, "{$companyName}_Website_Technical_Audit.pdf", [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     public function updateOpportunityStatus(int $oppId, string $newStatus): void

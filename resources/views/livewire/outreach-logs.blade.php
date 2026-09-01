@@ -164,9 +164,17 @@
                                 </div>
                             </td>
 
-                            <!-- Subject Line -->
+                            <!-- Subject Line & PDF Attachment Badge -->
                             <td class="py-4 px-4 max-w-xs truncate">
-                                <div class="font-semibold text-slate-800 truncate" title="{{ $msg->subject }}">{{ $msg->subject }}</div>
+                                <div class="font-semibold text-slate-800 truncate flex items-center gap-1.5" title="{{ $msg->subject }}">
+                                    <span class="truncate">{{ $msg->subject }}</span>
+                                    @if($msg->company?->report_pdf_path)
+                                        <span class="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 font-extrabold shrink-0 shadow-2xs" title="Branded Technical Audit PDF Attached">
+                                            <svg class="w-2.5 h-2.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                            <span>PDF</span>
+                                        </span>
+                                    @endif
+                                </div>
                                 <div class="text-[11px] text-slate-400 capitalize">{{ str_replace('_', ' ', $msg->segment ?: ($msg->direction === 'inbound' ? 'Inbound Reply' : 'Cold Pitch')) }}</div>
                             </td>
 

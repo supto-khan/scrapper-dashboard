@@ -66,4 +66,57 @@ class Company extends Model
     {
         return $this->hasMany(OutreachMessage::class, 'company_id');
     }
+
+    /**
+     * Locates the latest generated PDF audit report for this company across report directories.
+     */
+    public function getReportPdfPathAttribute(): ?string
+    {
+        return self::findReportPdf($this->domain);
+    }
+
+    /**
+     * Static helper to find a PDF report by domain.
+     */
+    public static function findReportPdf(?string $domain): ?string
+    {
+        if (empty($domain) || str_ends_with($domain, '.local')) {
+            return null;
+        }
+
+        $cleanDomain = str_replace(['http://', 'https://', '/'], '', strtolower(trim($domain)));
+        $domainUnderscore = str_replace('.', '_', $cleanDomain);
+
+        $possibleDirs = [
+            base_path('../signal-engine/reports'),
+            base_path('../reports'),
+            base_path('reports'),
+            public_path('reports'),
+            storage_path('app/reports'),
+            '/www/wwwroot/nexidant-signal/reports',
+            '/www/wwwroot/nexidant-signal/signal-engine/reports',
+        ];
+
+        foreach ($possibleDirs as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
+            // Find latest audit PDF matching domain pattern: {domain}_audit_{date}.pdf
+            $pattern = $dir . '/' . $domainUnderscore . '_audit_*.pdf';
+            $files = glob($pattern);
+            if (!empty($files)) {
+                usort($files, fn($a, $b) => filemtime($b) - filemtime($a));
+                return $files[0];
+            }
+
+            // Also check exact domain name format
+            $exact = $dir . '/' . $cleanDomain . '_audit.pdf';
+            if (file_exists($exact)) {
+                return $exact;
+            }
+        }
+
+        return null;
+    }
 }

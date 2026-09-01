@@ -57,19 +57,32 @@
             </div>
         </div>
 
-        <!-- Quick Score & Value Summary Card -->
-        <div class="flex items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Opportunity Score</div>
-                <div class="text-2xl font-extrabold text-[#00A878] font-mono">{{ $company->latestScore?->opportunity_score ?? 0 }}<span class="text-xs text-slate-400">/100</span></div>
-            </div>
-            <div class="h-8 w-px bg-slate-200"></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Est. Deal Value</div>
-                <div class="text-lg font-bold text-[#0F1F17]">
-                    ${{ number_format($company->opportunities->sum('estimated_value_low') / 1000) }}k - ${{ number_format($company->opportunities->sum('estimated_value_high') / 1000) }}k
+        <!-- Quick Score, Deal Value & PDF Report Download Card -->
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Opportunity Score</div>
+                    <div class="text-2xl font-extrabold text-[#00A878] font-mono">{{ $company->latestScore?->opportunity_score ?? 0 }}<span class="text-xs text-slate-400">/100</span></div>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Est. Deal Value</div>
+                    <div class="text-lg font-bold text-[#0F1F17]">
+                        ${{ number_format($company->opportunities->sum('estimated_value_low') / 1000) }}k - ${{ number_format($company->opportunities->sum('estimated_value_high') / 1000) }}k
+                    </div>
                 </div>
             </div>
+
+            @if($company->report_pdf_path)
+                <button
+                    wire:click="downloadReportPdf"
+                    type="button"
+                    class="inline-flex items-center gap-2 px-4 py-3.5 bg-gradient-to-r from-emerald-600 to-[#00A878] hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow transition transform active:scale-95"
+                >
+                    <svg class="w-4 h-4 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Download PDF Audit</span>
+                </button>
+            @endif
         </div>
     </div>
 
@@ -350,6 +363,28 @@
                         class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00A878] focus:bg-white leading-relaxed transition resize-y"
                     ></textarea>
                 </div>
+
+                <!-- PDF Attachment Status / Preview Card -->
+                @if($company->report_pdf_path)
+                    <div class="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span>Attachment: {{ $company->name }}_Website_Technical_Audit.pdf</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-extrabold uppercase tracking-wider">Auto-Attached</span>
+                                </div>
+                                <div class="text-[10px] text-slate-500">Will be automatically attached when this cold email is sent.</div>
+                            </div>
+                        </div>
+                        <button wire:click="downloadReportPdf" type="button" class="px-2.5 py-1.5 bg-white hover:bg-slate-50 text-[#00A878] border border-emerald-300 rounded-lg text-[11px] font-bold shadow-xs transition shrink-0 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                @endif
 
                 <!-- Action Controls: Copy, Save to Queue, and Send Now -->
                 <div class="pt-2 space-y-2">
