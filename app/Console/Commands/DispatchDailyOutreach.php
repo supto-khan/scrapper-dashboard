@@ -58,10 +58,11 @@ class DispatchDailyOutreach extends Command
             ->where('outreach_messages.status', 'queued')
             ->where('outreach_messages.step', 1)
             ->where('outreach_messages.direction', 'outbound')
+            ->where('outreach_messages.recipient_email', 'not like', '%.local')
+            ->where('companies.domain', 'not like', '%.local')
             ->whereNotIn('outreach_messages.company_id', $alreadyPitchedCompanyIds)
             ->select('outreach_messages.*')
             ->orderByRaw("
-                (companies.website_url IS NULL OR companies.domain LIKE '%.local') DESC,
                 CASE 
                     WHEN latest_score.opportunity_score >= 75 THEN 1
                     WHEN latest_score.opportunity_score >= 60 THEN 2

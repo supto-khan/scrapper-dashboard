@@ -46,6 +46,7 @@ class SendScheduledOutreach extends Command
         // 2. Fetch pending queued messages
         $messages = OutreachMessage::with(['company', 'contact'])
             ->where('status', 'queued')
+            ->where('recipient_email', 'not like', '%.local')
             ->where(function ($q) use ($now) {
                 $q->whereNull('scheduled_for')
                   ->orWhere('scheduled_for', '<=', $now);

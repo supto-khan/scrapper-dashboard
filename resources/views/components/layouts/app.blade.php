@@ -42,9 +42,6 @@
     </script>
     <style>
         body { font-family: 'Lexend', sans-serif; background-color: #F0FDF9; color: #0F1F17; }
-    </style>
-    <!-- Top Progress Indicator for SPA Navigation -->
-    <style>
         .nprogress-busy { pointer-events: none; }
         #nprogress { pointer-events: none; }
         #nprogress .bar {
@@ -54,12 +51,27 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
+            height: 3.5px;
+        }
+
+        @keyframes progressIndeterminate {
+            0% { transform: translateX(-100%) scaleX(0.2); }
+            50% { transform: translateX(0%) scaleX(0.7); }
+            100% { transform: translateX(100%) scaleX(0.2); }
+        }
+        .animate-progress-indeterminate {
+            animation: progressIndeterminate 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            transform-origin: 0% 50%;
+            will-change: transform;
         }
     </style>
     @livewireStyles
 </head>
-<body class="min-h-full flex flex-col antialiased">
+<body class="min-h-full flex flex-col antialiased relative">
+    <!-- Global Top Loading Progress Bar (Fires on Filter Clicks, Search, Pagination & Page Navigation) -->
+    <div id="global-top-loader" class="fixed top-0 left-0 w-full h-[3.5px] z-[9999] pointer-events-none hidden overflow-hidden shadow-[0_0_10px_rgba(0,200,150,0.8)]">
+        <div class="h-full w-full bg-gradient-to-r from-[#00C896] via-[#5EEAD4] to-[#00A878] animate-progress-indeterminate"></div>
+    </div>
     <!-- Brand Header (Light theme only) -->
     <header class="bg-white border-b border-emerald-100 shadow-sm sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -131,5 +143,44 @@
     </footer>
 
     @livewireScripts
+    <script>
+        document.addEventListener('livewire:init', () => {
+            const loader = document.getElementById('global-top-loader');
+            if (!loader) return;
+
+            let activeRequests = 0;
+
+            const showLoader = () => {
+                activeRequests++;
+                loader.classList.remove('hidden');
+            };
+
+            const hideLoader = () => {
+                activeRequests = Math.max(0, activeRequests - 1);
+                if (activeRequests === 0) {
+                    loader.classList.add('hidden');
+                }
+            };
+
+            // Hook all Livewire network actions (Filter clicks, search, sorting, pagination, actions)
+            Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                showLoader();
+                respond(() => hideLoader());
+                succeed(() => hideLoader());
+                fail(() => hideLoader());
+            });
+        });
+
+        // Hook full-page SPA transitions (wire:navigate)
+        document.addEventListener('livewire:navigating', () => {
+            const loader = document.getElementById('global-top-loader');
+            if (loader) loader.classList.remove('hidden');
+        });
+
+        document.addEventListener('livewire:navigated', () => {
+            const loader = document.getElementById('global-top-loader');
+            if (loader) loader.classList.add('hidden');
+        });
+    </script>
 </body>
 </html>
