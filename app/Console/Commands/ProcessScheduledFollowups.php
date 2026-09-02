@@ -9,20 +9,41 @@ use Illuminate\Support\Facades\Mail;
 
 class ProcessScheduledFollowups extends Command
 {
-    protected $signature = 'outreach:process-followups {--dry-run}';
-    protected $description = 'Dispatches scheduled 3-day follow-up outreach emails in the same thread, checking for prior replies.';
+    protected $signature = 'outreach:process-followups {--limit=50} {--dry-run}';
+    protected $description = 'Dispatches scheduled 3-day follow-up outreach emails in the same thread, checking for prior replies (Capped at 50/day).';
 
     public function handle(): int
     {
+        $limit = (int) ($this->option('limit') ?: env('FOLLOWUP_DAILY_LIMIT', 50));
         $isDryRun = $this->option('dry-run');
-        $this->info("🔍 Checking for due 3-day follow-up messages...");
 
+        $this->info("🔍 Checking for due 3-day follow-up messages (Daily Limit: {$limit}, Dry Run: " . ($isDryRun ? 'YES' : 'NO') . ")...");
+
+        // 1. Check how many follow-up emails have already been sent today
+        $sentTodayCount = OutreachMessage::whereDate('sent_at', today())
+            ->where('step', 2)
+            ->where('direction', 'outbound')
+            ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'replied'])
+            ->count();
+
+        $remainingAllowance = max(0, $limit - $sentTodayCount);
+
+        if ($remainingAllowance <= 0) {
+            $this->warn("⚠️ Daily follow-up limit of {$limit} already reached for today ({$sentTodayCount} sent). Halting dispatch.");
+            return 0;
+        }
+
+        $this->info("📊 Follow-up progress: {$sentTodayCount} sent today. Remaining quota: {$remainingAllowance}.");
+
+        // 2. Query oldest due follow-ups capped at remaining allowance
         $dueFollowups = OutreachMessage::with(['company', 'contact'])
             ->where('step', 2)
             ->where('direction', 'outbound')
             ->where('status', 'staged')
             ->where('scheduled_for', '<=', now())
+            ->orderBy('scheduled_for', 'asc')
             ->orderBy('id', 'asc')
+            ->take($remainingAllowance)
             ->get();
 
         if ($dueFollowups->isEmpty()) {
@@ -30,7 +51,7 @@ class ProcessScheduledFollowups extends Command
             return 0;
         }
 
-        $this->info("📨 Found {$dueFollowups->count()} due follow-ups.");
+        $this->info("📨 Found {$dueFollowups->count()} due follow-ups queued for dispatch.");
         $dispatched = 0;
         $cancelled = 0;
 

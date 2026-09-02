@@ -126,9 +126,16 @@
                                 @else
                                     <span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-extrabold rounded">PITCH</span>
                                 @endif
-                                <span class="text-xs font-bold text-slate-900 truncate max-w-[160px]">{{ $senderLabel }}</span>
+
+                                @if($msg->company?->report_pdf_path)
+                                    <span class="px-1 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-extrabold rounded flex items-center gap-0.5 shrink-0" title="Audit PDF Attached">
+                                        <svg class="w-2.5 h-2.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                        <span>PDF</span>
+                                    </span>
+                                @endif
+                                <span class="text-xs font-bold text-slate-900 truncate max-w-[130px]">{{ $senderLabel }}</span>
                             </div>
-                            <span class="text-[10px] font-mono text-slate-400">{{ $msg->sent_at ? $msg->sent_at->format('M d') : ($msg->scheduled_for ? $msg->scheduled_for->format('M d') : 'Pending') }}</span>
+                            <span class="text-[10px] font-mono text-slate-400 shrink-0">{{ $msg->sent_at ? $msg->sent_at->format('M d') : ($msg->scheduled_for ? $msg->scheduled_for->format('M d') : 'Pending') }}</span>
                         </div>
 
                         <div class="text-xs font-semibold text-slate-800 mt-1 truncate">{{ $msg->subject }}</div>
@@ -204,6 +211,23 @@
                         </a>
                     @endif
                 </div>
+
+                <!-- PDF Attachment Bar -->
+                @if($selectedMessage->company?->report_pdf_path)
+                    <div class="px-4 py-2 bg-emerald-50/90 border-b border-emerald-200 flex items-center justify-between text-xs shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-extrabold uppercase tracking-wider">
+                                <svg class="w-3 h-3 text-emerald-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                <span>PDF Attached</span>
+                            </span>
+                            <span class="text-slate-700 font-semibold truncate max-w-sm">{{ basename($selectedMessage->company->report_pdf_path) }}</span>
+                        </div>
+                        <a href="{{ route('company.detail', $selectedMessage->company_id) }}" wire:navigate class="text-xs font-bold text-[#00A878] hover:underline flex items-center gap-1">
+                            <span>View / Download in Studio</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+                @endif
 
                 <!-- Messages Timeline Scroll Area -->
                 <div class="flex-1 p-6 overflow-y-auto space-y-4">

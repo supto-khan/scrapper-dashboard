@@ -10,7 +10,7 @@ class SendScheduledOutreach extends Command
 {
     protected $signature = 'outreach:send-scheduled 
                             {--limit=25 : Maximum number of emails to dispatch in this batch run}
-                            {--daily-limit=200 : Maximum total emails allowed to be sent per day}';
+                            {--daily-limit=250 : Maximum total emails allowed to be sent per day}';
                             
     protected $description = 'Dispatches queued & scheduled cold outreach emails via configured SMTP with daily volume caps';
 
@@ -18,7 +18,7 @@ class SendScheduledOutreach extends Command
     {
         @set_time_limit(0);
         $batchLimit = (int) $this->option('limit');
-        $dailyLimit = (int) $this->option('daily-limit');
+        $dailyLimit = (int) ($this->option('daily-limit') ?: env('DAILY_OUTREACH_LIMIT', 250));
         $now = now();
         $todayStart = $now->copy()->startOfDay();
 

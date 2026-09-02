@@ -225,7 +225,7 @@ class OpportunityDashboard extends Component
             ->whereHas('contacts')
             ->count();
 
-        $dailyLimit = (int) env('DAILY_OUTREACH_LIMIT', 100);
+        $dailyLimit = (int) env('DAILY_OUTREACH_LIMIT', 250);
         $sentToday = OutreachMessage::whereDate('sent_at', today())
             ->where('direction', 'outbound')
             ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'replied'])

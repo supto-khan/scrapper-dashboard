@@ -12,12 +12,12 @@ use Illuminate\Support\Str;
 
 class DispatchDailyOutreach extends Command
 {
-    protected $signature = 'outreach:dispatch-daily {--limit=100} {--dry-run}';
+    protected $signature = 'outreach:dispatch-daily {--limit=250} {--dry-run}';
     protected $description = 'Dispatches the daily batch of personalized cold outreach emails with human-paced staggering and 1-per-company frequency capping.';
 
     public function handle(): int
     {
-        $limit = (int) ($this->option('limit') ?: env('DAILY_OUTREACH_LIMIT', 100));
+        $limit = (int) ($this->option('limit') ?: env('DAILY_OUTREACH_LIMIT', 250));
         $isDryRun = $this->option('dry-run');
 
         $this->info("🚀 Starting Daily Outreach Dispatch (Daily Limit: {$limit}, Dry Run: " . ($isDryRun ? 'YES' : 'NO') . ")...");

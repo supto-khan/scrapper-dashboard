@@ -101,6 +101,44 @@
         </div>
     </div>
 
+    <!-- Sequence Stage Navigation Tabs: Step 1 New Pitches vs Step 2 Follow-ups -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200 pb-1">
+        <div class="flex items-center gap-2">
+            <button
+                wire:click="setTab('initial')"
+                type="button"
+                class="px-4 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center gap-2.5 relative {{ $activeTab === 'initial' ? 'bg-[#00A878] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
+            >
+                <svg class="w-4 h-4 {{ $activeTab === 'initial' ? 'text-white' : 'text-[#00A878]' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                <span>Step 1: New Cold Pitches</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono {{ $activeTab === 'initial' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700' }}">
+                    {{ number_format($stats['initial_count']) }}
+                </span>
+            </button>
+
+            <button
+                wire:click="setTab('followup')"
+                type="button"
+                class="px-4 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center gap-2.5 relative {{ $activeTab === 'followup' ? 'bg-amber-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
+            >
+                <svg class="w-4 h-4 {{ $activeTab === 'followup' ? 'text-white' : 'text-amber-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Step 2: 3-Day Follow-ups</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono {{ $activeTab === 'followup' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">
+                    {{ number_format($stats['followup_count']) }}
+                </span>
+            </button>
+        </div>
+
+        <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full {{ $activeTab === 'initial' ? 'bg-[#00A878]' : 'bg-amber-500' }}"></span>
+            @if($activeTab === 'initial')
+                <span>New cold outreach pitches with 3-page PDF technical audits (Target: 250/day)</span>
+            @else
+                <span>Automated 3-day threaded follow-ups (Capped at 50/day)</span>
+            @endif
+        </div>
+    </div>
+
     <!-- Filter & Search Toolbar -->
     <div class="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div class="w-full md:w-80 relative">
@@ -269,8 +307,12 @@
                     @empty
                         <tr>
                             <td colspan="6" class="py-12 text-center text-xs text-slate-400">
-                                <div>No outreach messages logged yet.</div>
-                                <div class="text-[11px] text-slate-400 mt-1">Queue messages from any company's Opportunity Studio page to track delivery here.</div>
+                                <div class="font-bold text-slate-600">No {{ $activeTab === 'initial' ? 'Step 1 cold pitches' : '3-day follow-up emails' }} found.</div>
+                                <div class="text-[11px] text-slate-400 mt-1">
+                                    {{ $activeTab === 'initial' 
+                                        ? 'Run offline staging or queue new pitches to track delivery here.' 
+                                        : 'Follow-ups are automatically generated 3 days after Step 1 cold pitches are sent.' }}
+                                </div>
                             </td>
                         </tr>
                     @endforelse

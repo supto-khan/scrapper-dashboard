@@ -11,15 +11,23 @@ class OutreachLogs extends Component
 {
     use WithPagination;
 
+    public string $activeTab = 'initial'; // 'initial' (Step 1 Pitches) | 'followup' (Step 2 Follow-ups)
     public string $statusFilter = 'all';
     public string $search = '';
     public int $perPage = 15;
 
     protected $queryString = [
+        'activeTab' => ['except' => 'initial'],
         'statusFilter' => ['except' => 'all'],
         'search' => ['except' => ''],
         'perPage' => ['except' => 15],
     ];
+
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = in_array($tab, ['initial', 'followup']) ? $tab : 'initial';
+        $this->resetPage();
+    }
 
     public function updatingSearch(): void
     {
@@ -118,15 +126,34 @@ class OutreachLogs extends Component
 
     public function render()
     {
+        $initialCount = OutreachMessage::where(function ($q) {
+            $q->where('step', 1)->orWhereNull('step');
+        })->where('direction', 'outbound')->count();
+
+        $followupCount = OutreachMessage::where('step', 2)
+            ->where('direction', 'outbound')
+            ->count();
+
         $stats = [
             'total' => OutreachMessage::count(),
             'delivered' => OutreachMessage::whereIn('status', ['delivered', 'sent', 'opened'])->count(),
             'opened' => OutreachMessage::where('open_count', '>', 0)->count(),
             'failed' => OutreachMessage::where('status', 'failed')->count(),
-            'queued' => OutreachMessage::where('status', 'queued')->count(),
+            'queued' => OutreachMessage::whereIn('status', ['queued', 'staged'])->count(),
+            'initial_count' => $initialCount,
+            'followup_count' => $followupCount,
         ];
 
         $query = OutreachMessage::with(['company', 'contact'])->latest();
+
+        // Filter by Tab: Initial Pitches (Step 1) vs 3-Day Follow-ups (Step 2)
+        if ($this->activeTab === 'followup') {
+            $query->where('step', 2);
+        } else {
+            $query->where(function ($q) {
+                $q->where('step', 1)->orWhereNull('step');
+            });
+        }
 
         if ($this->statusFilter !== 'all') {
             if ($this->statusFilter === 'opened') {
