@@ -101,8 +101,12 @@ class DispatchDailyOutreach extends Command
 
             $this->line("👉 Preparing dispatch for {$message->company?->name} ({$toEmail})...");
 
+            $pdfPath = $message->company ? $message->company->report_pdf_path : null;
+            $hasPdf = ($pdfPath && file_exists($pdfPath));
+            $pdfBadge = $hasPdf ? " [📎 PDF Attached: " . basename($pdfPath) . "]" : " [No PDF]";
+
             if ($isDryRun) {
-                $this->info("   [DRY RUN] Would send '{$message->subject}' to {$toEmail}");
+                $this->info("   [DRY RUN] Would send '{$message->subject}' to {$toEmail}{$pdfBadge}");
                 $dispatchedCount++;
                 $contactedCompanyIdsToday[] = $message->company_id;
                 continue;
@@ -113,8 +117,6 @@ class DispatchDailyOutreach extends Command
                 $customMessageId = Str::uuid()->toString() . '@' . (parse_url(config('app.url'), PHP_URL_HOST) ?: 'nexidant.com');
                 $trackingUrl = url("/track/open/{$message->id}");
                 $htmlBody = nl2br(e($message->body_text)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
-
-                $pdfPath = $message->company ? $message->company->report_pdf_path : null;
 
                 Mail::html($htmlBody, function ($mail) use ($toEmail, $message, $customMessageId, $pdfPath) {
                     $mail->to($toEmail)
@@ -175,7 +177,7 @@ class DispatchDailyOutreach extends Command
 
                 $dispatchedCount++;
                 $contactedCompanyIdsToday[] = $message->company_id;
-                $this->info("   ✓ Sent successfully (ID: #{$message->id})");
+                $this->info("   ✓ Sent successfully (ID: #{$message->id})" . ($hasPdf ? " [📎 Attached: " . basename($pdfPath) . "]" : ""));
 
             } catch (\Throwable $e) {
                 $failedCount++;

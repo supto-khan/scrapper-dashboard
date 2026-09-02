@@ -119,7 +119,8 @@ class SendScheduledOutreach extends Command
                     }
                 }
 
-                $this->info("✓ Delivered #{$msg->id} -> {$toEmail}");
+                $hasPdf = ($pdfPath && file_exists($pdfPath));
+                $this->info("✓ Delivered #{$msg->id} -> {$toEmail}" . ($hasPdf ? " [📎 Attached: " . basename($pdfPath) . "]" : ""));
                 $sentCount++;
 
                 // Throttling delay between sends to protect SMTP reputation (2-3 seconds)
