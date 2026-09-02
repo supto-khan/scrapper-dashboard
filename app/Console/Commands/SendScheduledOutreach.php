@@ -43,9 +43,12 @@ class SendScheduledOutreach extends Command
 
         $this->info("Dispathing up to {$effectiveLimit} email(s) in this batch (Remaining today: {$remainingToday}).");
 
-        // 2. Fetch pending queued messages
+        // 2. Fetch pending queued messages (Step 1 cold pitches only)
         $messages = OutreachMessage::with(['company', 'contact'])
             ->whereIn('status', ['queued', 'staged'])
+            ->where(function ($q) {
+                $q->where('step', 1)->orWhereNull('step');
+            })
             ->where('recipient_email', 'not like', '%.local')
             ->where(function ($q) use ($now) {
                 $q->whereNull('scheduled_for')
@@ -93,9 +96,13 @@ class SendScheduledOutreach extends Command
 
                 $pdfPath = $msg->company ? $msg->company->report_pdf_path : null;
 
-                Mail::html($htmlBody, function ($mail) use ($toEmail, $msg, $pdfPath) {
+                $customMessageId = \Illuminate\Support\Str::uuid()->toString() . '@' . (parse_url(config('app.url'), PHP_URL_HOST) ?: 'nexidant.com');
+
+                Mail::html($htmlBody, function ($mail) use ($toEmail, $msg, $customMessageId, $pdfPath) {
                     $mail->to($toEmail)
-                         ->subject($msg->subject);
+                         ->subject($msg->subject)
+                         ->getHeaders()
+                         ->addIdHeader('Message-ID', $customMessageId);
 
                     if ($pdfPath && file_exists($pdfPath)) {
                         $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $msg->company->name ?? 'Company');
@@ -108,6 +115,7 @@ class SendScheduledOutreach extends Command
 
                 $msg->update([
                     'status' => 'delivered',
+                    'message_id' => $customMessageId,
                     'sent_at' => now(),
                     'error_message' => null,
                 ]);

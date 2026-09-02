@@ -17,6 +17,9 @@ class DispatchDailyOutreach extends Command
 
     public function handle(): int
     {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+
         $limit = (int) ($this->option('limit') ?: env('DAILY_OUTREACH_LIMIT', 250));
         $isDryRun = $this->option('dry-run');
 
@@ -85,6 +88,7 @@ class DispatchDailyOutreach extends Command
         $contactedCompanyIdsToday = [];
 
         foreach ($pendingMessages as $message) {
+            @set_time_limit(60);
             // Double check company wasn't contacted in this loop
             if (in_array($message->company_id, $contactedCompanyIdsToday)) {
                 continue;
@@ -179,6 +183,9 @@ class DispatchDailyOutreach extends Command
                 $dispatchedCount++;
                 $contactedCompanyIdsToday[] = $message->company_id;
                 $this->info("   ✓ Sent successfully (ID: #{$message->id})" . ($hasPdf ? " [📎 Attached: " . basename($pdfPath) . "]" : ""));
+
+                // Human-paced anti-burst staggering to protect Brevo SMTP reputation
+                usleep(1500000);
 
             } catch (\Throwable $e) {
                 $failedCount++;

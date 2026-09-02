@@ -14,6 +14,9 @@ class ProcessScheduledFollowups extends Command
 
     public function handle(): int
     {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+
         $limit = (int) ($this->option('limit') ?: env('FOLLOWUP_DAILY_LIMIT', 50));
         $isDryRun = $this->option('dry-run');
 
@@ -56,6 +59,7 @@ class ProcessScheduledFollowups extends Command
         $cancelled = 0;
 
         foreach ($dueFollowups as $followup) {
+            @set_time_limit(60);
             $toEmail = $followup->recipient_email ?: $followup->contact?->email;
 
             // Check if there was an inbound reply from this contact or company
@@ -84,14 +88,17 @@ class ProcessScheduledFollowups extends Command
             }
 
             try {
+                $customMessageId = \Illuminate\Support\Str::uuid()->toString() . '@' . (parse_url(config('app.url'), PHP_URL_HOST) ?: 'nexidant.com');
                 $trackingUrl = url("/track/open/{$followup->id}");
                 $htmlBody = nl2br(e($followup->body_text)) . "<br><br><img src=\"{$trackingUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />";
 
                 $pdfPath = $followup->company ? $followup->company->report_pdf_path : null;
 
-                Mail::html($htmlBody, function ($mail) use ($toEmail, $followup, $pdfPath) {
+                Mail::html($htmlBody, function ($mail) use ($toEmail, $followup, $customMessageId, $pdfPath) {
                     $mail->to($toEmail)
-                         ->subject($followup->subject);
+                         ->subject($followup->subject)
+                         ->getHeaders()
+                         ->addIdHeader('Message-ID', $customMessageId);
 
                     if ($pdfPath && file_exists($pdfPath)) {
                         $companyName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $followup->company->name ?? 'Company');
@@ -111,12 +118,16 @@ class ProcessScheduledFollowups extends Command
 
                 $followup->update([
                     'status' => 'delivered',
+                    'message_id' => $customMessageId,
                     'sent_at' => now(),
                     'error_message' => null,
                 ]);
 
                 $dispatched++;
                 $this->info("   ✓ Dispatched Step 2 follow-up to {$toEmail}");
+
+                // Human-paced anti-burst staggering to protect Brevo SMTP reputation
+                usleep(1500000);
 
             } catch (\Throwable $e) {
                 $followup->update([
