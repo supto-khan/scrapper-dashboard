@@ -135,16 +135,18 @@ class OutreachLogs extends Component
             ->count();
 
         $stats = [
-            'total' => OutreachMessage::count(),
-            'delivered' => OutreachMessage::whereIn('status', ['delivered', 'sent', 'opened'])->count(),
-            'opened' => OutreachMessage::where('open_count', '>', 0)->count(),
-            'failed' => OutreachMessage::where('status', 'failed')->count(),
-            'queued' => OutreachMessage::whereIn('status', ['queued', 'staged'])->count(),
+            'total' => OutreachMessage::where('direction', 'outbound')->count(),
+            'delivered' => OutreachMessage::where('direction', 'outbound')->whereIn('status', ['delivered', 'sent', 'opened'])->count(),
+            'opened' => OutreachMessage::where('direction', 'outbound')->where('open_count', '>', 0)->count(),
+            'failed' => OutreachMessage::where('direction', 'outbound')->where('status', 'failed')->count(),
+            'queued' => OutreachMessage::where('direction', 'outbound')->whereIn('status', ['queued', 'staged'])->count(),
             'initial_count' => $initialCount,
             'followup_count' => $followupCount,
         ];
 
-        $query = OutreachMessage::with(['company', 'contact'])->latest();
+        $query = OutreachMessage::with(['company', 'contact'])
+            ->where('direction', 'outbound')
+            ->latest();
 
         // Filter by Tab: Initial Pitches (Step 1) vs 3-Day Follow-ups (Step 2)
         if ($this->activeTab === 'followup') {
