@@ -55,7 +55,7 @@ class DispatchDailyOutreach extends Command
                 '=',
                 'outreach_messages.company_id'
             )
-            ->where('outreach_messages.status', 'queued')
+            ->whereIn('outreach_messages.status', ['queued', 'staged'])
             ->where('outreach_messages.step', 1)
             ->where('outreach_messages.direction', 'outbound')
             ->where('outreach_messages.recipient_email', 'not like', '%.local')
@@ -82,6 +82,7 @@ class DispatchDailyOutreach extends Command
         $this->info("📨 Found {$pendingMessages->count()} candidates for dispatch.");
         $dispatchedCount = 0;
         $failedCount = 0;
+        $contactedCompanyIdsToday = [];
 
         foreach ($pendingMessages as $message) {
             // Double check company wasn't contacted in this loop
