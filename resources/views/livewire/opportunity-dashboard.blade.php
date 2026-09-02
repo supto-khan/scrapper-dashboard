@@ -1,7 +1,8 @@
 <div>
     <!-- Today's Outreach Progress & Lead Target Widget -->
     @php
-        $progressPct = min(100, round(($stats['sent_today'] / max(1, $stats['daily_limit'])) * 100));
+        $targetDailyLimit = max(1, (int) ($stats['daily_limit'] ?: 250));
+        $progressPct = min(100, round(($stats['sent_today'] / $targetDailyLimit) * 100));
     @endphp
     <div class="bg-white rounded-2xl p-5 border border-emerald-200/80 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-r from-white via-[#F0FDF9]/40 to-emerald-50/30">
         <div class="space-y-1.5 flex-1">
@@ -13,7 +14,7 @@
                 <div class="w-full max-w-md bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200">
                     <div class="bg-gradient-to-r from-[#00A878] to-[#00C896] h-full rounded-full transition-all duration-500" style="width: {{ $progressPct }}%"></div>
                 </div>
-                <span class="text-xs font-mono font-extrabold text-slate-700">{{ $stats['sent_today'] }} / {{ $stats['daily_limit'] }} Sent ({{ $progressPct }}%)</span>
+                <span class="text-xs font-mono font-extrabold text-slate-700">{{ $stats['sent_today'] }} / {{ $targetDailyLimit }} Sent ({{ $progressPct }}%)</span>
             </div>
         </div>
 

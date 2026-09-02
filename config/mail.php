@@ -16,6 +16,9 @@ return [
 
     'default' => env('MAIL_MAILER', 'log'),
 
+    'daily_limit' => (int) env('DAILY_OUTREACH_LIMIT', 250),
+    'followup_limit' => (int) env('FOLLOWUP_DAILY_LIMIT', 50),
+
     /*
     |--------------------------------------------------------------------------
     | Mailer Configurations
