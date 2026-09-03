@@ -87,6 +87,18 @@ class SendScheduledOutreach extends Command
                 continue;
             }
 
+            // Bounce protection: Skip unverified synthetic/guessed contacts unless ZeroBounce is active
+            $contactSource = $msg->contact?->source;
+            if (in_array($contactSource, ['canonical_synthesizer', 'email_permutator']) && empty(env('ZEROBOUNCE_API_KEY'))) {
+                $this->warn("   ⛔ Skipping unverified synthetic contact ({$contactSource}): {$toEmail} (to protect bounce rate)");
+                $msg->update([
+                    'status' => 'failed',
+                    'error_message' => "Skipped: unverified synthetic contact ({$contactSource}) to protect bounce rate.",
+                ]);
+                $failedCount++;
+                continue;
+            }
+
             try {
                 $this->line("📤 Sending to {$toEmail} (Company: {$msg->company?->name})...");
 

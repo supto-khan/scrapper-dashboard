@@ -104,6 +104,18 @@ class DispatchDailyOutreach extends Command
                 continue;
             }
 
+            // Bounce protection: Skip unverified synthetic/guessed contacts unless ZeroBounce is active
+            $contactSource = $message->contact?->source;
+            if (in_array($contactSource, ['canonical_synthesizer', 'email_permutator']) && empty(env('ZEROBOUNCE_API_KEY'))) {
+                $this->warn("   ⛔ Skipping unverified synthetic contact ({$contactSource}): {$toEmail} (to protect bounce rate)");
+                $message->update([
+                    'status' => 'failed',
+                    'error_message' => "Skipped: unverified synthetic contact ({$contactSource}) to protect bounce rate.",
+                ]);
+                $failedCount++;
+                continue;
+            }
+
             $this->line("👉 Preparing dispatch for {$message->company?->name} ({$toEmail})...");
 
             $pdfPath = $message->company ? $message->company->report_pdf_path : null;
