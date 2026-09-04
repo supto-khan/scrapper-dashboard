@@ -13,11 +13,12 @@ Schedule::command('outreach:dispatch-daily --limit=250')
     ->withoutOverlapping()
     ->runInBackground();
 
-// Staggered Outreach Window (every 10 minutes between 7:00 PM - 10:00 PM BST / 8:00 AM - 11:00 AM EST):
-Schedule::command('outreach:send-scheduled --limit=25 --daily-limit=250')
-    ->everyTenMinutes()
-    ->timezone('Asia/Dhaka')
-    ->between('19:00', '22:00')
+// Staggered 1-Email-Per-Minute Outreach (Monday - Friday, 9:00 AM - 5:00 PM US Eastern):
+Schedule::command('outreach:send-scheduled --limit=1 --daily-limit=250')
+    ->everyMinute()
+    ->timezone('America/New_York')
+    ->weekdays()
+    ->between('09:00', '17:00')
     ->withoutOverlapping()
     ->runInBackground();
 

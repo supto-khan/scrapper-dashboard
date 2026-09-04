@@ -10,7 +10,8 @@ class SendScheduledOutreach extends Command
 {
     protected $signature = 'outreach:send-scheduled 
                             {--limit=25 : Maximum number of emails to dispatch in this batch run}
-                            {--daily-limit=250 : Maximum total emails allowed to be sent per day}';
+                            {--daily-limit=250 : Maximum total emails allowed to be sent per day}
+                            {--force : Force dispatch even outside US business hours}';
                             
     protected $description = 'Dispatches queued & scheduled cold outreach emails via configured SMTP with daily volume caps';
 
@@ -21,6 +22,19 @@ class SendScheduledOutreach extends Command
         $dailyLimit = (int) ($this->option('daily-limit') ?: env('DAILY_OUTREACH_LIMIT', 250));
         $now = now();
         $todayStart = $now->copy()->startOfDay();
+
+        // Check US Business Working Hours (Mon - Fri, 9:00 AM - 5:00 PM US Eastern)
+        if (!$this->option('force')) {
+            $usTime = now()->setTimezone('America/New_York');
+            if ($usTime->isWeekend()) {
+                $this->info("⏸️ [Out of Hours] Today is {$usTime->format('l')}, a weekend in the US ({$usTime->format('g:i A T')}). Pausing dispatch until Monday.");
+                return 0;
+            }
+            if ($usTime->hour < 9 || $usTime->hour >= 17) {
+                $this->info("⏸️ [Out of Hours] Current US time is {$usTime->format('g:i A T')}. Cold emails are restricted to US business hours (9:00 AM - 5:00 PM EST).");
+                return 0;
+            }
+        }
 
         $this->info("⚡ [Outreach Scheduler] Checking scheduled & queued messages (Time: {$now->toDateTimeString()})...");
 
