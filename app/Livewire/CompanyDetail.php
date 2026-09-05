@@ -238,15 +238,26 @@ PROMPT;
         }
 
         // 2. Fallback to PHP Template Engine
-        $contactName = $contact ? ($contact->first_name ?: explode(' ', $contact->full_name)[0]) : 'there';
-        $tech = $this->company->latestTechnology;
-        $audit = $this->company->latestAudit;
-        $cms = $tech?->cms ? "{$tech->cms} setup" : "current technology architecture";
+        $rawCompany = $this->company->name ?: $this->company->domain;
+        $cleanCompany = preg_replace('/\.(com|org|net|io|ai|co|agency|digital|tech|us|uk|de|ca|dev)$/i', '', $rawCompany);
+        $cleanCompany = ucwords(str_replace(['-', '_'], ' ', $cleanCompany));
+        $companyName = $cleanCompany;
 
-        $frontendStack = $tech?->frontend_stack ?? [];
-        $frontendStr = !empty($frontendStack) ? implode(', ', $frontendStack) : 'legacy frontend libraries';
+        $rawContactName = $contact ? ($contact->first_name ?: explode(' ', $contact->full_name)[0]) : null;
+        $isBotName = false;
+        if ($rawContactName) {
+            $lower = strtolower(trim($rawContactName));
+            if (str_contains($lower, '.') || str_contains($lower, '@') || in_array($lower, ['team', 'info', 'contact', 'support', 'admin', 'sales', 'hello', 'hi', 'careers', 'office', 'decision', 'maker'])) {
+                $isBotName = true;
+            }
+        }
 
-        $companyName = $this->company->name ?: $this->company->domain;
+        if (!$rawContactName || $isBotName) {
+            $contactName = $companyName ? "{$companyName} team" : "there";
+        } else {
+            $contactName = $rawContactName;
+        }
+
         $signature = "Best,\n"
             . "Supto Khan\n"
             . "CEO, Nexidant\n"
