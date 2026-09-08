@@ -410,12 +410,20 @@
                                 <span>High (75–89)</span>
                             </button>
                             <button
-                                wire:click="$set('priorityTier', 'nurture')"
+                                wire:click="$set('priorityTier', 'disqualified')"
                                 type="button"
-                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'nurture' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'disqualified' ? 'bg-rose-700 text-white border-rose-700 shadow-sm' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}"
                             >
-                                <svg class="w-4 h-4 text-blue-500 {{ $priorityTier === 'nurture' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                                <span>Nurture (60–74)</span>
+                                <svg class="w-4 h-4 text-rose-600 {{ $priorityTier === 'disqualified' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Red Flag / Failed</span>
+                            </button>
+                            <button
+                                wire:click="$set('priorityTier', 'pending_audit')"
+                                type="button"
+                                class="p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition {{ $priorityTier === 'pending_audit' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' }}"
+                            >
+                                <svg class="w-4 h-4 text-amber-500 {{ $priorityTier === 'pending_audit' ? 'text-white' : '' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Pending Audit</span>
                             </button>
                         </div>
                     </div>
@@ -629,6 +637,8 @@
                     'high' => 'bg-emerald-50 text-[#00A878] border-emerald-200 font-semibold',
                     'nurture' => 'bg-blue-50 text-blue-800 border-blue-200',
                     'low' => 'bg-slate-100 text-slate-700 border-slate-200',
+                    'disqualified' => 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
+                    'pending_audit' => 'bg-amber-100 text-amber-800 border-amber-300 font-medium',
                     default => 'bg-gray-100 text-gray-600 border-gray-200'
                 };
             @endphp
@@ -661,6 +671,13 @@
                             <div class="text-[10px] uppercase font-bold text-slate-400 mt-1 tracking-wider">{{ $tier }}</div>
                         </div>
                     </div>
+
+                    @if($tier === 'disqualified')
+                        <div class="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg text-[11px] font-bold text-rose-700 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <span>RED FLAG: Crawl / Audit Failed — Outreach Blocked</span>
+                        </div>
+                    @endif
 
                     <!-- Meta Tags & Outreach Status Badge -->
                     <div class="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-slate-600">

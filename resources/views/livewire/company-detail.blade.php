@@ -7,11 +7,27 @@
 
         <div class="flex items-center gap-3">
             <span class="text-xs text-slate-400 font-mono">Company #{{ $company->id }}</span>
-            <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $company->latestScore?->priority_tier === 'immediate' ? 'bg-emerald-100 text-emerald-800' : ($company->latestScore?->priority_tier === 'high' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700') }}">
+            <span class="text-xs px-2.5 py-1 rounded-full font-semibold {{ $company->latestScore?->priority_tier === 'immediate' ? 'bg-emerald-100 text-emerald-800' : ($company->latestScore?->priority_tier === 'high' ? 'bg-teal-100 text-teal-800' : ($company->latestScore?->priority_tier === 'disqualified' ? 'bg-rose-100 text-rose-800 border border-rose-300 font-bold' : ($company->latestScore?->priority_tier === 'pending_audit' ? 'bg-amber-100 text-amber-800 border border-amber-300 font-medium' : 'bg-slate-100 text-slate-700'))) }}">
                 Score: {{ $company->latestScore?->opportunity_score ?? 0 }} pts ({{ ucfirst($company->latestScore?->priority_tier ?? 'nurture') }})
             </span>
         </div>
     </div>
+
+    <!-- Red Flag Alert Banner -->
+    @if($company->latestScore?->priority_tier === 'disqualified' || $company->signals->where('type', 'crawl_audit_failed')->isNotEmpty())
+        <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-800 flex items-center justify-between animate-in fade-in">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div>
+                    <strong class="text-sm text-rose-900 block font-bold">🚨 RED FLAG: Website Crawl / Audit Failed</strong>
+                    <p class="text-rose-700 font-normal mt-0.5">This company's website is unreachable, returning HTTP connection errors, or failed technical audit. Cold outreach has been strictly blocked and suppressed.</p>
+                </div>
+            </div>
+            <span class="px-2.5 py-1 rounded bg-rose-200 text-rose-900 font-bold uppercase text-[10px] tracking-wider shrink-0">Disqualified</span>
+        </div>
+    @endif
 
     <!-- Alert Notifications -->
     @if(session()->has('success_message'))

@@ -130,12 +130,22 @@ class OpportunityDashboard extends Component
             'contacts',
         ]);
 
-        // Quality Gate: Strictly exclude unqualified or unscored leads (Score < 40 and priority_tier = 'ignore')
-        $query->whereHas('latestScore', function ($q) {
-            $effectiveMin = max(40, $this->minScore);
-            $q->where('opportunity_score', '>=', $effectiveMin)
-              ->where('priority_tier', '!=', 'ignore');
-        });
+        // Quality Gate: Exclude unqualified (< 40 and priority_tier = 'ignore')
+        // unless explicitly inspecting disqualified, pending_audit, or ignore tiers
+        if (in_array($this->priorityTier, ['disqualified', 'pending_audit', 'ignore'])) {
+            $query->whereHas('latestScore', function ($q) {
+                $q->where('priority_tier', $this->priorityTier);
+            });
+        } else {
+            $query->whereHas('latestScore', function ($q) {
+                $effectiveMin = max(40, $this->minScore);
+                $q->where('opportunity_score', '>=', $effectiveMin)
+                  ->where('priority_tier', '!=', 'ignore');
+                if ($this->priorityTier !== 'all') {
+                    $q->where('priority_tier', $this->priorityTier);
+                }
+            });
+        }
 
         if (!empty($this->search)) {
             $query->where(function ($q) {
@@ -164,12 +174,6 @@ class OpportunityDashboard extends Component
         } elseif ($this->websiteFilter === 'has_website') {
             $query->whereNotNull('website_url')
                   ->where('domain', 'not like', '%.local');
-        }
-
-        if ($this->priorityTier !== 'all') {
-            $query->whereHas('latestScore', function ($q) {
-                $q->where('priority_tier', $this->priorityTier);
-            });
         }
 
         if ($this->enrichmentStatus === 'enriched') {
