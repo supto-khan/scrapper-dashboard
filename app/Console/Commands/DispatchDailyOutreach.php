@@ -52,7 +52,7 @@ class DispatchDailyOutreach extends Command
         $pendingMessages = OutreachMessage::with(['company', 'contact', 'opportunity'])
             ->join('companies', 'companies.id', '=', 'outreach_messages.company_id')
             ->leftJoinSub(
-                'SELECT s1.* FROM scores s1 WHERE s1.id = (SELECT MAX(s2.id) FROM scores s2 WHERE s2.company_id = s1.company_id)',
+                'SELECT s.company_id, s.opportunity_score FROM scores s INNER JOIN (SELECT company_id, MAX(id) AS max_id FROM scores GROUP BY company_id) latest_s ON s.id = latest_s.max_id',
                 'latest_score',
                 'latest_score.company_id',
                 '=',
