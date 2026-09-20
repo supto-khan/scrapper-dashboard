@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Opportunity;
 use App\Models\OutreachMessage;
 use App\Models\Score;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -120,31 +121,29 @@ class OpportunityDashboard extends Component
 
     public function render()
     {
-        // Base query with relationships
-        $query = Company::with([
-            'latestScore',
-            'latestTechnology',
-            'latestAudit',
-            'opportunities',
-            'signals',
-            'contacts',
-        ]);
+        // Base query with joined latest_score for O(1) indexed filtering and sorting
+        $query = Company::join('scores as latest_score', 'companies.latest_score_id', '=', 'latest_score.id')
+            ->with([
+                'latestScore',
+                'latestTechnology',
+                'latestAudit',
+                'opportunities',
+                'signals',
+                'contacts',
+                'outreachMessages',
+            ]);
 
         // Quality Gate: Exclude unqualified (< 40 and priority_tier = 'ignore')
         // unless explicitly inspecting disqualified, pending_audit, or ignore tiers
         if (in_array($this->priorityTier, ['disqualified', 'pending_audit', 'ignore'])) {
-            $query->whereHas('latestScore', function ($q) {
-                $q->where('priority_tier', $this->priorityTier);
-            });
+            $query->where('latest_score.priority_tier', $this->priorityTier);
         } else {
-            $query->whereHas('latestScore', function ($q) {
-                $effectiveMin = max(40, $this->minScore);
-                $q->where('opportunity_score', '>=', $effectiveMin)
-                  ->where('priority_tier', '!=', 'ignore');
-                if ($this->priorityTier !== 'all') {
-                    $q->where('priority_tier', $this->priorityTier);
-                }
-            });
+            $effectiveMin = max(40, $this->minScore);
+            $query->where('latest_score.opportunity_score', '>=', $effectiveMin)
+                  ->where('latest_score.priority_tier', '!=', 'ignore');
+            if ($this->priorityTier !== 'all') {
+                $query->where('latest_score.priority_tier', $this->priorityTier);
+            }
         }
 
         if (!empty($this->search)) {
@@ -209,48 +208,115 @@ class OpportunityDashboard extends Component
             });
         }
 
-        // 1. Pipeline Summary Stats (Computed directly in SQL without loading IDs to PHP memory)
-        $filteredCount = (clone $query)->count();
-        $totalDiscovered = Company::count();
-        $totalQualified = Company::whereHas('latestScore', function ($q) {
-            $q->where('opportunity_score', '>=', 40.0)
-              ->where('priority_tier', '!=', 'ignore');
-        })->count();
+        // 1. Pipeline Summary Stats
+        $isDefaultFilter = empty($this->search)
+            && $this->sourceFilter === 'all'
+            && $this->websiteFilter === 'all'
+            && $this->priorityTier === 'all'
+            && $this->enrichmentStatus === 'all'
+            && $this->outreachStatus === 'all'
+            && $this->serviceType === 'all'
+            && $this->opportunityStatus === 'all'
+            && $this->minScore === 40;
 
-        // High priority companies in filtered set
-        $highPriorityCount = (clone $query)
-            ->whereHas('latestScore', function ($q) {
-                $q->whereIn('priority_tier', ['immediate', 'high']);
-            })->count();
+        // Cached Global Stats (60s TTL - avoids running heavy full-table aggregate queries on every filter click)
+        $totalDiscovered = Cache::remember('dashboard_total_discovered', 60, fn() => Company::count());
+        $totalQualified = Cache::remember('dashboard_total_qualified', 60, fn() => Company::join('scores as s', 'companies.latest_score_id', '=', 's.id')
+            ->where('s.opportunity_score', '>=', 40.0)
+            ->where('s.priority_tier', '!=', 'ignore')
+            ->count());
 
-        // Enriched companies in filtered set
-        $enrichedCount = (clone $query)
-            ->whereHas('contacts')
-            ->count();
+        if ($isDefaultFilter) {
+            $filteredCount = $totalQualified;
+            $highPriorityCount = Cache::remember('dashboard_default_high_priority', 60, function () use ($query) {
+                return (clone $query)->whereIn('latest_score.priority_tier', ['immediate', 'high'])->count();
+            });
+            $enrichedCount = Cache::remember('dashboard_default_enriched', 60, function () use ($query) {
+                return (clone $query)->whereHas('contacts')->count();
+            });
+            $pipelineValues = Cache::remember('dashboard_default_pipeline_values', 60, function () use ($query) {
+                $row = Opportunity::where('status', '!=', 'archived')
+                    ->joinSub(
+                        (clone $query)->select('companies.id as match_company_id'),
+                        'matched_companies',
+                        'opportunities.company_id',
+                        '=',
+                        'matched_companies.match_company_id'
+                    )
+                    ->selectRaw('COALESCE(SUM(estimated_value_low), 0) as low_sum, COALESCE(SUM(estimated_value_high), 0) as high_sum')
+                    ->first();
+
+                return [
+                    'low_sum' => (int) ($row->low_sum ?? 0),
+                    'high_sum' => (int) ($row->high_sum ?? 0),
+                ];
+            });
+        } else {
+            $filteredCount = (clone $query)->count();
+
+            if (in_array($this->priorityTier, ['immediate', 'high'])) {
+                $highPriorityCount = $filteredCount;
+            } elseif ($this->priorityTier !== 'all') {
+                $highPriorityCount = 0;
+            } else {
+                $highPriorityCount = (clone $query)
+                    ->whereIn('latest_score.priority_tier', ['immediate', 'high'])
+                    ->count();
+            }
+
+            $enrichedCount = (clone $query)->whereHas('contacts')->count();
+
+            $row = Opportunity::where('status', '!=', 'archived')
+                ->joinSub(
+                    (clone $query)->select('companies.id as match_company_id'),
+                    'matched_companies',
+                    'opportunities.company_id',
+                    '=',
+                    'matched_companies.match_company_id'
+                )
+                ->selectRaw('COALESCE(SUM(estimated_value_low), 0) as low_sum, COALESCE(SUM(estimated_value_high), 0) as high_sum')
+                ->first();
+
+            $pipelineValues = [
+                'low_sum' => (int) ($row->low_sum ?? 0),
+                'high_sum' => (int) ($row->high_sum ?? 0),
+            ];
+        }
+
+        $todayStats = Cache::remember('dashboard_today_stats', 30, function () {
+            $todayStart = today()->startOfDay();
+            $todayEnd = today()->endOfDay();
+
+            $sentToday = OutreachMessage::whereBetween('sent_at', [$todayStart, $todayEnd])
+                ->where('direction', 'outbound')
+                ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'replied'])
+                ->count();
+            $scrapedToday = Company::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+            $repliesToday = OutreachMessage::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->where('direction', 'inbound')
+                ->where('sender_email', 'not like', '%mailer-daemon%')
+                ->where('sender_email', 'not like', '%postmaster%')
+                ->where('subject', 'not like', '%Mail delivery failed%')
+                ->where('subject', 'not like', '%Delivery Status Notification%')
+                ->where('subject', 'not like', '%Undelivered Mail%')
+                ->count();
+            $bouncedToday = OutreachMessage::whereBetween('sent_at', [$todayStart, $todayEnd])
+                ->where('status', 'bounced')
+                ->count();
+            $queuedOutreach = OutreachMessage::where('status', 'queued')
+                ->where('direction', 'outbound')
+                ->count();
+
+            return [
+                'sent_today' => $sentToday,
+                'scraped_today' => $scrapedToday,
+                'replies_today' => $repliesToday,
+                'bounced_today' => $bouncedToday,
+                'queued_outreach' => $queuedOutreach,
+            ];
+        });
 
         $dailyLimit = (int) (config('mail.daily_limit') ?: env('DAILY_OUTREACH_LIMIT', 250)) ?: 250;
-        $sentToday = OutreachMessage::whereDate('sent_at', today())
-            ->where('direction', 'outbound')
-            ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'replied'])
-            ->count();
-        $scrapedToday = Company::whereDate('created_at', today())->count();
-        $repliesToday = OutreachMessage::whereDate('created_at', today())
-            ->where('direction', 'inbound')
-            ->where('sender_email', 'not like', '%mailer-daemon%')
-            ->where('sender_email', 'not like', '%postmaster%')
-            ->where('subject', 'not like', '%Mail delivery failed%')
-            ->where('subject', 'not like', '%Delivery Status Notification%')
-            ->where('subject', 'not like', '%Undelivered Mail%')
-            ->count();
-        $bouncedToday = OutreachMessage::whereDate('sent_at', today())
-            ->where('status', 'bounced')
-            ->count();
-
-        // Compute low and high pipeline values in a single query via subselect
-        $pipelineValues = Opportunity::where('status', '!=', 'archived')
-            ->whereIn('company_id', (clone $query)->select('companies.id'))
-            ->selectRaw('COALESCE(SUM(estimated_value_low), 0) as low_sum, COALESCE(SUM(estimated_value_high), 0) as high_sum')
-            ->first();
 
         $stats = [
             'total_qualified' => $totalQualified,
@@ -258,29 +324,21 @@ class OpportunityDashboard extends Component
             'filtered_leads' => $filteredCount,
             'high_priority' => $highPriorityCount,
             'enriched_leads' => $enrichedCount,
-            'sent_today' => $sentToday,
+            'sent_today' => $todayStats['sent_today'],
             'daily_limit' => $dailyLimit,
-            'scraped_today' => $scrapedToday,
-            'replies_today' => $repliesToday,
-            'bounced_today' => $bouncedToday,
-            'pipeline_value_low' => (int) ($pipelineValues->low_sum ?? 0),
-            'pipeline_value_high' => (int) ($pipelineValues->high_sum ?? 0),
-            'queued_outreach' => OutreachMessage::where('status', 'queued')
-                ->where('direction', 'outbound')
-                ->count(),
+            'scraped_today' => $todayStats['scraped_today'],
+            'replies_today' => $todayStats['replies_today'],
+            'bounced_today' => $todayStats['bounced_today'],
+            'pipeline_value_low' => (int) ($pipelineValues['low_sum'] ?? 0),
+            'pipeline_value_high' => (int) ($pipelineValues['high_sum'] ?? 0),
+            'queued_outreach' => $todayStats['queued_outreach'],
         ];
 
-        // 2. Order by latest score descending and paginate (Optimized O(N) grouped join)
-        $companies = $query->leftJoinSub(
-            'SELECT s.company_id, s.opportunity_score FROM scores s INNER JOIN (SELECT company_id, MAX(id) AS max_id FROM scores GROUP BY company_id) latest_s ON s.id = latest_s.max_id',
-            'latest_score',
-            'latest_score.company_id',
-            '=',
-            'companies.id'
-        )
-        ->select('companies.*')
-        ->orderByDesc('latest_score.opportunity_score')
-        ->paginate($this->perPage);
+        // 2. Order by latest score descending and paginate with precomputed total
+        $companies = (clone $query)
+            ->select('companies.*')
+            ->orderByDesc('latest_score.opportunity_score')
+            ->paginate($this->perPage, ['companies.*'], 'page', null, $filteredCount);
 
         return view('livewire.opportunity-dashboard', [
             'stats' => $stats,

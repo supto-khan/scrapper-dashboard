@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -52,9 +53,9 @@ class Company extends Model
         return $this->hasMany(Score::class, 'company_id');
     }
 
-    public function latestScore(): HasOne
+    public function latestScore(): BelongsTo
     {
-        return $this->hasOne(Score::class, 'company_id')->latestOfMany();
+        return $this->belongsTo(Score::class, 'latest_score_id');
     }
 
     public function contacts(): HasMany
