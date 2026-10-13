@@ -81,11 +81,11 @@
                     <span class="text-2xl font-extrabold text-[#0F1F17]">
                         {{ $stats['pipeline_value_formatted'] }}
                     </span>
-                    <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Filtered Active</span>
+                    <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Ready to Pitch</span>
                 </div>
             </div>
             <div class="mt-2 text-[11px] text-slate-400 font-medium">
-                Aggregate deal value across filtered leads
+                Actionable pipeline value ($2.5k - $5k avg project)
             </div>
         </div>
 

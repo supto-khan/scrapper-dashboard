@@ -253,23 +253,10 @@ class OpportunityDashboard extends Component
                     ->whereNotNull('last_crawled_at')
                     ->count();
             });
-            $pipelineValues = Cache::remember('dashboard_default_pipeline_values', 60, function () use ($query) {
-                $row = Opportunity::where('status', '!=', 'archived')
-                    ->joinSub(
-                        (clone $query)->select('companies.id as match_company_id'),
-                        'matched_companies',
-                        'opportunities.company_id',
-                        '=',
-                        'matched_companies.match_company_id'
-                    )
-                    ->selectRaw('COALESCE(SUM(estimated_value_low), 0) as low_sum, COALESCE(SUM(estimated_value_high), 0) as high_sum')
-                    ->first();
-
-                return [
-                    'low_sum' => (int) ($row->low_sum ?? 0),
-                    'high_sum' => (int) ($row->high_sum ?? 0),
-                ];
-            });
+            $pipelineValues = [
+                'low_sum' => $readyToPitchCount * 2500,
+                'high_sum' => $readyToPitchCount * 5000,
+            ];
         } else {
             $filteredCount = (clone $query)->count();
 
@@ -300,20 +287,10 @@ class OpportunityDashboard extends Component
                 ->whereNotNull('last_crawled_at')
                 ->count();
 
-            $row = Opportunity::where('status', '!=', 'archived')
-                ->joinSub(
-                    (clone $query)->select('companies.id as match_company_id'),
-                    'matched_companies',
-                    'opportunities.company_id',
-                    '=',
-                    'matched_companies.match_company_id'
-                )
-                ->selectRaw('COALESCE(SUM(estimated_value_low), 0) as low_sum, COALESCE(SUM(estimated_value_high), 0) as high_sum')
-                ->first();
-
+            $targetCount = $this->outreachStatus === 'contacted' ? $alreadyPitchedCount : $readyToPitchCount;
             $pipelineValues = [
-                'low_sum' => (int) ($row->low_sum ?? 0),
-                'high_sum' => (int) ($row->high_sum ?? 0),
+                'low_sum' => $targetCount * 2500,
+                'high_sum' => $targetCount * 5000,
             ];
         }
 
