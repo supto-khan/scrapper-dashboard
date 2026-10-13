@@ -42,37 +42,65 @@
 
     <!-- Top Stats Row (Dynamically updates with active filters) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtered / Qualified Leads</div>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold text-[#0F1F17]">{{ number_format($stats['filtered_leads']) }}</span>
-                <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-medium">of {{ number_format($stats['total_qualified']) }}</span>
+        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filtered / Qualified Leads</div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-[#0F1F17]">{{ number_format($stats['filtered_leads']) }}</span>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-medium">
+                        @if($stats['filtered_leads'] < $stats['total_qualified'])
+                            of {{ number_format($stats['total_qualified']) }} qualified
+                        @else
+                            of {{ number_format($stats['total_discovered']) }} total
+                        @endif
+                    </span>
+                </div>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-400 font-medium">
+                {{ round(($stats['filtered_leads'] / max(1, $stats['total_discovered'])) * 100, 1) }}% of total discovery pool
             </div>
         </div>
 
-        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">High Priority Leads</div>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold text-[#00A878]">{{ number_format($stats['high_priority']) }}</span>
-                <span class="text-xs text-[#00A878] bg-emerald-50 px-2 py-0.5 rounded font-medium">Score &ge; 75</span>
+        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">High Priority Leads</div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-[#00A878]">{{ number_format($stats['high_priority']) }}</span>
+                    <span class="text-xs text-[#00A878] bg-emerald-50 px-2 py-0.5 rounded font-medium">Score &ge; 75</span>
+                </div>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-400 font-medium">
+                {{ round(($stats['high_priority'] / max(1, $stats['filtered_leads'])) * 100, 1) }}% of filtered leads
             </div>
         </div>
 
-        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Pipeline Value</div>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-2xl font-extrabold text-[#0F1F17]">
-                    ${{ number_format($stats['pipeline_value_low'] / 1000) }}k - ${{ number_format($stats['pipeline_value_high'] / 1000) }}k
-                </span>
-                <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Filtered Active</span>
+        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Est. Pipeline Value</div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-2xl font-extrabold text-[#0F1F17]">
+                        {{ $stats['pipeline_value_formatted'] }}
+                    </span>
+                    <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Filtered Active</span>
+                </div>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-400 font-medium">
+                Aggregate deal value across filtered leads
             </div>
         </div>
 
-        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Enriched Decision Makers</div>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold text-[#00A878]">{{ number_format($stats['enriched_leads']) }}</span>
-                <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-medium">Ready to Pitch</span>
+        <div class="bg-white rounded-xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ready to Pitch Leads</div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-3xl font-extrabold text-[#00A878]">{{ number_format($stats['ready_to_pitch']) }}</span>
+                    <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold">Actionable</span>
+                </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium border-t border-slate-100 pt-1.5">
+                <span>{{ number_format($stats['already_pitched']) }} contacted</span>
+                <span class="text-slate-300">•</span>
+                <span>{{ number_format($stats['enriched_leads']) }} total enriched</span>
             </div>
         </div>
     </div>

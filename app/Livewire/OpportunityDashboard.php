@@ -234,6 +234,25 @@ class OpportunityDashboard extends Component
             $enrichedCount = Cache::remember('dashboard_default_enriched', 60, function () use ($query) {
                 return (clone $query)->whereHas('contacts')->count();
             });
+            $alreadyPitchedCount = Cache::remember('dashboard_default_already_pitched', 60, function () use ($query) {
+                return (clone $query)->whereHas('outreachMessages', function ($q) {
+                    $q->where('direction', 'outbound');
+                })->count();
+            });
+            $readyToPitchCount = Cache::remember('dashboard_default_ready_to_pitch', 60, function () use ($query) {
+                return (clone $query)
+                    ->whereDoesntHave('outreachMessages', function ($q) {
+                        $q->where('direction', 'outbound');
+                    })
+                    ->whereHas('contacts', function ($q) {
+                        $q->whereIn('email_status', ['valid', 'catch_all'])
+                          ->where('email', 'not like', '%.local')
+                          ->where('email', 'not like', '%@business.local');
+                    })
+                    ->where('domain', 'not like', '%.local')
+                    ->whereNotNull('last_crawled_at')
+                    ->count();
+            });
             $pipelineValues = Cache::remember('dashboard_default_pipeline_values', 60, function () use ($query) {
                 $row = Opportunity::where('status', '!=', 'archived')
                     ->joinSub(
@@ -265,6 +284,21 @@ class OpportunityDashboard extends Component
             }
 
             $enrichedCount = (clone $query)->whereHas('contacts')->count();
+            $alreadyPitchedCount = (clone $query)->whereHas('outreachMessages', function ($q) {
+                $q->where('direction', 'outbound');
+            })->count();
+            $readyToPitchCount = (clone $query)
+                ->whereDoesntHave('outreachMessages', function ($q) {
+                    $q->where('direction', 'outbound');
+                })
+                ->whereHas('contacts', function ($q) {
+                    $q->whereIn('email_status', ['valid', 'catch_all'])
+                      ->where('email', 'not like', '%.local')
+                      ->where('email', 'not like', '%@business.local');
+                })
+                ->where('domain', 'not like', '%.local')
+                ->whereNotNull('last_crawled_at')
+                ->count();
 
             $row = Opportunity::where('status', '!=', 'archived')
                 ->joinSub(
@@ -318,19 +352,26 @@ class OpportunityDashboard extends Component
 
         $dailyLimit = (int) (config('mail.daily_limit') ?: env('DAILY_OUTREACH_LIMIT', 250)) ?: 250;
 
+        $lowVal = (float) ($pipelineValues['low_sum'] ?? 0);
+        $highVal = (float) ($pipelineValues['high_sum'] ?? 0);
+        $pipelineFormatted = $this->formatCurrency($lowVal) . ' - ' . $this->formatCurrency($highVal);
+
         $stats = [
             'total_qualified' => $totalQualified,
             'total_discovered' => $totalDiscovered,
             'filtered_leads' => $filteredCount,
             'high_priority' => $highPriorityCount,
             'enriched_leads' => $enrichedCount,
+            'already_pitched' => $alreadyPitchedCount,
+            'ready_to_pitch' => $readyToPitchCount,
             'sent_today' => $todayStats['sent_today'],
             'daily_limit' => $dailyLimit,
             'scraped_today' => $todayStats['scraped_today'],
             'replies_today' => $todayStats['replies_today'],
             'bounced_today' => $todayStats['bounced_today'],
-            'pipeline_value_low' => (int) ($pipelineValues['low_sum'] ?? 0),
-            'pipeline_value_high' => (int) ($pipelineValues['high_sum'] ?? 0),
+            'pipeline_value_low' => (int) $lowVal,
+            'pipeline_value_high' => (int) $highVal,
+            'pipeline_value_formatted' => $pipelineFormatted,
             'queued_outreach' => $todayStats['queued_outreach'],
         ];
 
@@ -345,5 +386,19 @@ class OpportunityDashboard extends Component
             'companies' => $companies,
             'minScore' => $this->minScore,
         ])->layout('components.layouts.app');
+    }
+
+    protected function formatCurrency(float $value): string
+    {
+        if ($value >= 1_000_000_000) {
+            return '$' . number_format($value / 1_000_000_000, 1) . 'B';
+        }
+        if ($value >= 1_000_000) {
+            return '$' . number_format($value / 1_000_000, 1) . 'M';
+        }
+        if ($value >= 1_000) {
+            return '$' . number_format($value / 1_000) . 'k';
+        }
+        return '$' . number_format($value);
     }
 }
