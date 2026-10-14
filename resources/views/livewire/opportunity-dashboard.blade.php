@@ -296,6 +296,17 @@
                 <span>Filters</span>
             </button>
 
+            <!-- Quick Sort Dropdown -->
+            <div class="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-2xl shadow-sm text-xs font-semibold text-slate-600">
+                <span class="text-slate-400">Sort:</span>
+                <select wire:model.live="sortBy" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+                    <option value="newest">Newest First</option>
+                    <option value="score">Highest Score</option>
+                    <option value="crawled">Recently Crawled</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
+
             <!-- Quick Per-Page Dropdown -->
             <div class="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-2xl shadow-sm text-xs font-semibold text-slate-600">
                 <span class="text-slate-400">Show:</span>
@@ -606,7 +617,21 @@
                         </select>
                     </div>
 
-                    <!-- 6. Minimum Opportunity Score Range Slider -->
+                    <!-- 6. Display Sort Order -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                            <span>Display Sort Order</span>
+                            <span class="text-[10px] font-mono text-slate-400">Order by</span>
+                        </label>
+                        <select wire:model.live="sortBy" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#00A878]">
+                            <option value="newest">Newest Leads First (Default)</option>
+                            <option value="score">Highest Opportunity Score</option>
+                            <option value="crawled">Recently Crawled / Audited</option>
+                            <option value="oldest">Oldest Leads First</option>
+                        </select>
+                    </div>
+
+                    <!-- 7. Minimum Opportunity Score Range Slider -->
                     <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
                         <div class="flex items-center justify-between">
                             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Minimum Score</label>

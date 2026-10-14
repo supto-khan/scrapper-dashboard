@@ -23,6 +23,7 @@ class OpportunityDashboard extends Component
     public int $minScore = 40;
     public string $serviceType = 'all';
     public int $perPage = 15;
+    public string $sortBy = 'newest';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -35,6 +36,7 @@ class OpportunityDashboard extends Component
         'minScore' => ['except' => 40],
         'serviceType' => ['except' => 'all'],
         'perPage' => ['except' => 15],
+        'sortBy' => ['except' => 'newest'],
     ];
 
     protected $listeners = [
@@ -102,10 +104,16 @@ class OpportunityDashboard extends Component
         $this->opportunityStatus = 'all';
         $this->serviceType = 'all';
         $this->minScore = 40;
+        $this->sortBy = 'newest';
         $this->resetPage();
     }
 
     public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSortBy(): void
     {
         $this->resetPage();
     }
@@ -352,11 +360,28 @@ class OpportunityDashboard extends Component
             'queued_outreach' => $todayStats['queued_outreach'],
         ];
 
-        // 2. Order by latest score descending and paginate with precomputed total
-        $companies = (clone $query)
-            ->select('companies.*')
-            ->orderByDesc('latest_score.opportunity_score')
-            ->paginate($this->perPage, ['companies.*'], 'page', null, $filteredCount);
+        // 2. Order by selected sort and paginate with precomputed total
+        $companiesQuery = (clone $query)->select('companies.*');
+
+        switch ($this->sortBy) {
+            case 'score':
+                $companiesQuery->orderByDesc('latest_score.opportunity_score')
+                               ->orderByDesc('companies.id');
+                break;
+            case 'crawled':
+                $companiesQuery->orderByRaw('companies.last_crawled_at IS NULL, companies.last_crawled_at DESC')
+                               ->orderByDesc('companies.id');
+                break;
+            case 'oldest':
+                $companiesQuery->orderBy('companies.id', 'asc');
+                break;
+            case 'newest':
+            default:
+                $companiesQuery->orderByDesc('companies.id');
+                break;
+        }
+
+        $companies = $companiesQuery->paginate($this->perPage, ['companies.*'], 'page', null, $filteredCount);
 
         return view('livewire.opportunity-dashboard', [
             'stats' => $stats,
