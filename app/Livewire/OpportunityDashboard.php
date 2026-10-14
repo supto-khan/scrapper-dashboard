@@ -255,10 +255,17 @@ class OpportunityDashboard extends Component
                     ->whereHas('contacts', function ($q) {
                         $q->whereIn('email_status', ['valid', 'catch_all'])
                           ->where('email', 'not like', '%.local')
-                          ->where('email', 'not like', '%@business.local');
+                          ->where('email', 'not like', '%@business.local')
+                          ->where('email', 'not like', '%.gov%')
+                          ->where('email', 'not like', '%.sg')
+                          ->where('email', 'not like', '%.edu%')
+                          ->where('email', 'not like', '%@qq.com');
                     })
-                    ->where('domain', 'not like', '%.local')
-                    ->whereNotNull('last_crawled_at')
+                    ->where(function ($q) {
+                        $q->whereNotNull('last_crawled_at')
+                          ->orWhere('domain', 'like', '%.local')
+                          ->orWhereNull('website_url');
+                    })
                     ->count();
             });
             $pipelineValues = [
@@ -289,10 +296,17 @@ class OpportunityDashboard extends Component
                 ->whereHas('contacts', function ($q) {
                     $q->whereIn('email_status', ['valid', 'catch_all'])
                       ->where('email', 'not like', '%.local')
-                      ->where('email', 'not like', '%@business.local');
+                      ->where('email', 'not like', '%@business.local')
+                      ->where('email', 'not like', '%.gov%')
+                      ->where('email', 'not like', '%.sg')
+                      ->where('email', 'not like', '%.edu%')
+                      ->where('email', 'not like', '%@qq.com');
                 })
-                ->where('domain', 'not like', '%.local')
-                ->whereNotNull('last_crawled_at')
+                ->where(function ($q) {
+                    $q->whereNotNull('last_crawled_at')
+                      ->orWhere('domain', 'like', '%.local')
+                      ->orWhereNull('website_url');
+                })
                 ->count();
 
             $targetCount = $this->outreachStatus === 'contacted' ? $alreadyPitchedCount : $readyToPitchCount;
