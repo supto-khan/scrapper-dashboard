@@ -62,14 +62,22 @@ class DispatchDailyOutreach extends Command
             ->where('outreach_messages.step', 1)
             ->where('outreach_messages.direction', 'outbound')
             ->where('outreach_messages.recipient_email', 'not like', '%.local')
-            ->where('companies.domain', 'not like', '%.local')
+            ->where('outreach_messages.recipient_email', 'not like', '%@business.local')
+            ->where('outreach_messages.recipient_email', 'not like', '%@%.local')
+            ->where(function ($query) {
+                // Allow both crawled web platforms and high-priority no-website leads, as long as recipient_email is real
+                $query->whereNotNull('companies.website_url')
+                      ->orWhere('companies.domain', 'like', '%.local')
+                      ->orWhereNull('companies.website_url');
+            })
             ->whereNotIn('outreach_messages.company_id', $alreadyPitchedCompanyIds)
             ->select('outreach_messages.*')
             ->orderByRaw("
                 CASE 
-                    WHEN latest_score.opportunity_score >= 75 THEN 1
-                    WHEN latest_score.opportunity_score >= 60 THEN 2
-                    ELSE 3
+                    WHEN latest_score.opportunity_score >= 95 THEN 1
+                    WHEN latest_score.opportunity_score >= 75 THEN 2
+                    WHEN latest_score.opportunity_score >= 60 THEN 3
+                    ELSE 4
                 END ASC,
                 latest_score.opportunity_score DESC,
                 outreach_messages.id ASC
@@ -99,6 +107,18 @@ class DispatchDailyOutreach extends Command
                 $message->update([
                     'status' => 'failed',
                     'error_message' => 'Invalid recipient email address.',
+                ]);
+                $failedCount++;
+                continue;
+            }
+
+            // Quality & Authenticity Gate: Strict domain, format, and deliverability check
+            [$isValidLead, $rejectReason] = $this->isValidLeadEmail($toEmail, $message->company?->name);
+            if (!$isValidLead) {
+                $this->warn("   ⛔ Skipping invalid/unverified lead email: {$toEmail} ({$rejectReason})");
+                $message->update([
+                    'status' => 'failed',
+                    'error_message' => "Rejected lead email: {$rejectReason}",
                 ]);
                 $failedCount++;
                 continue;
@@ -236,5 +256,108 @@ class DispatchDailyOutreach extends Command
             . "---\n"
             . "{$companyBrand} | {$senderAddress}\n"
             . "Unsubscribe: https://nexidant.com/unsubscribe?email={$contactEmail}";
+    }
+
+    /**
+     * Validates that an outreach recipient email is authentic, deliverable, and relevant.
+     * Prevents sending mail to synthetic .local, foreign government/academic, aggregator, or unresolvable domains.
+     *
+     * @return array [bool $isValid, string $reason]
+     */
+    protected function isValidLeadEmail(string $email, ?string $companyName = null): array
+    {
+        $cleanEmail = strtolower(trim($email));
+        if (!filter_var($cleanEmail, FILTER_VALIDATE_EMAIL)) {
+            return [false, 'invalid_rfc_syntax'];
+        }
+
+        $parts = explode('@', $cleanEmail);
+        if (count($parts) !== 2) {
+            return [false, 'invalid_format'];
+        }
+
+        $prefix = trim($parts[0]);
+        $domain = trim($parts[1]);
+
+        $blockedPrefixes = [
+            'xxx', 'test', 'sample', 'dummy', 'exam', 'noreply', 'no-reply',
+            'donotreply', 'mailer-daemon', 'postmaster', 'root', 'security',
+            'abuse', 'privacy', 'terms', 'admin', 'webmaster'
+        ];
+        if (strlen($prefix) < 2 || in_array($prefix, $blockedPrefixes) || str_starts_with($prefix, 'helpdesk')) {
+            return [false, "blocked_prefix_{$prefix}"];
+        }
+
+        $blockedDomains = [
+            'example.com', 'domain.com', 'email.com', 'yourcompany.com', 'company.com',
+            'sentry.io', 'wix.com', 'wixpress.com', 'wordpress.org', 'schema.org',
+            'cloudflare.com', 'github.com', 'webcontainer-api.io',
+            'realtor.com', 'move.com', 'cpadirectory.com', 'yellowpages.com', 'whitepages.com',
+            'yelp.com', 'angi.com', 'angieslist.com', 'thumbtack.com', 'houzz.com',
+            'homeadvisor.com', 'bbb.org', 'tripadvisor.com', 'manta.com', 'dnb.com',
+            'zoominfo.com', 'allbiz.com', 'leadiq.com', 'bumvar.com', '6bestrated.com',
+            'citysquares.com', 'breken.com', 'facebook.com', 'instagram.com', 'linkedin.com',
+            'twitter.com', 'x.com', 'youtube.com', 'tiktok.com', 'pinterest.com',
+            'google.com', 'bing.com', 'duckduckgo.com', 'qq.com', '163.com', '126.com', 'sina.com',
+            'angelone.in', 'remax.com', 'wxxi.org', 'rs-event.sg', 'digitalrealty.com',
+        ];
+        if (in_array($domain, $blockedDomains)) {
+            return [false, "blocked_domain_{$domain}"];
+        }
+
+        $blockedTlds = [
+            '.local', '.localhost', '.internal', '.lan', '.corp', '.home', '.test', '.example', '.invalid',
+            '.gov', '.mil', '.edu', '.ac.uk', '.gov.sg', '.edu.sg', '.org.sg', '.sg',
+            '.fi', '.co.nz', '.com.hk', '.com.au', '.ru', '.cn', '.gov.', '.gob.',
+            '.in', '.co.in', '.org.in', '.gov.in'
+        ];
+        foreach ($blockedTlds as $tld) {
+            if (str_ends_with($domain, $tld) || str_contains($domain, $tld)) {
+                return [false, "blocked_tld_or_government_{$domain}"];
+            }
+        }
+
+        $commonProviders = [
+            'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com',
+            'icloud.com', 'msn.com', 'live.com', 'comcast.net', 'sbcglobal.net',
+            'att.net', 'verizon.net', 'bellsouth.net', 'cox.net', 'charter.net',
+            'zoho.com', 'protonmail.com', 'me.com', 'mac.com', 'ymail.com', 'rocketmail.com',
+            'earthlink.net', 'roadrunner.com', 'windstream.net', 'frontier.com'
+        ];
+        if (in_array($domain, $commonProviders)) {
+            return [true, 'valid_common_provider'];
+        }
+
+        // Custom business domain: verify DNS MX / A records exist
+        if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+            return [false, "unresolvable_domain_{$domain}"];
+        }
+
+        // Relevance check for custom domain against company name
+        if ($companyName) {
+            $cleanCompany = strtolower(preg_replace('/[^\w\s]/', '', $companyName));
+            $stopWords = [
+                'the', 'and', 'inc', 'llc', 'corp', 'co', 'ltd', 'company', 'group',
+                'services', 'specialists', 'associates', 'pc', 'pa', 'management',
+                'auto', 'care', 'repair', 'clinic', 'center', 'contractors', 'law',
+                'firm', 'office', 'dentistry', 'plumbing', 'roofing'
+            ];
+            $words = array_filter(explode(' ', $cleanCompany), fn($w) => strlen($w) >= 3 && !in_array($w, $stopWords));
+            $domainStem = explode('.', $domain)[0];
+
+            $hasMatch = false;
+            foreach ($words as $word) {
+                if (str_contains($domainStem, $word) || (strlen($domainStem) >= 4 && str_contains($word, $domainStem))) {
+                    $hasMatch = true;
+                    break;
+                }
+            }
+
+            if (!$hasMatch && count($words) > 0) {
+                return [false, "custom_domain_mismatch_{$domainStem}"];
+            }
+        }
+
+        return [true, 'valid_custom_domain'];
     }
 }
